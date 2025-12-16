@@ -8,32 +8,67 @@ from __future__ import absolute_import, division, unicode_literals
 __author__ = "Charlie Powell, Austin (Pi 5 compatibility)"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 
-import board
-import neopixel_spi as neopixel
+# Lazy imports - only load Adafruit libraries when actually needed
+# This allows the plugin to load even if dependencies are missing
+board = None
+neopixel = None
 
 
-# Color order mappings - map rpi_ws281x strip types to Adafruit color orders
-COLOR_ORDERS = {
-    "WS2811_STRIP_GRB": neopixel.GRB,
-    "WS2812_STRIP": neopixel.GRB,  # WS2812 is typically GRB
-    "WS2811_STRIP_RGB": neopixel.RGB,
-    "WS2811_STRIP_RBG": neopixel.RBG,
-    "WS2811_STRIP_GBR": neopixel.GBR,
-    "WS2811_STRIP_BGR": neopixel.BGR,
-    "WS2811_STRIP_BRG": neopixel.BRG,
-    "SK6812_STRIP": neopixel.GRB,
-    "SK6812W_STRIP": neopixel.GRBW,
-    "SK6812_STRIP_RGBW": neopixel.RGBW,
-    "SK6812_STRIP_RBGW": neopixel.RBGW,
-    "SK6812_STRIP_GRBW": neopixel.GRBW,
-    "SK6812_STRIP_GBRW": neopixel.GBRW,
-    "SK6812_STRIP_BRGW": neopixel.BRGW,
-    "SK6812_STRIP_BGRW": neopixel.BGRW,
-}
+def _load_adafruit_libs():
+    """Lazy load Adafruit libraries when needed."""
+    global board, neopixel
+    if board is None:
+        import board as _board
+        import neopixel_spi as _neopixel
+        board = _board
+        neopixel = _neopixel
+
+
+def _get_color_order(strip_type):
+    """Get the color order for a strip type, loading libraries if needed."""
+    _load_adafruit_libs()
+    color_orders = {
+        "WS2811_STRIP_GRB": neopixel.GRB,
+        "WS2812_STRIP": neopixel.GRB,  # WS2812 is typically GRB
+        "WS2811_STRIP_RGB": neopixel.RGB,
+        "WS2811_STRIP_RBG": neopixel.RBG,
+        "WS2811_STRIP_GBR": neopixel.GBR,
+        "WS2811_STRIP_BGR": neopixel.BGR,
+        "WS2811_STRIP_BRG": neopixel.BRG,
+        "SK6812_STRIP": neopixel.GRB,
+        "SK6812W_STRIP": neopixel.GRBW,
+        "SK6812_STRIP_RGBW": neopixel.RGBW,
+        "SK6812_STRIP_RBGW": neopixel.RBGW,
+        "SK6812_STRIP_GRBW": neopixel.GRBW,
+        "SK6812_STRIP_GBRW": neopixel.GBRW,
+        "SK6812_STRIP_BRGW": neopixel.BRGW,
+        "SK6812_STRIP_BGRW": neopixel.BGRW,
+    }
+    return color_orders.get(strip_type, neopixel.GRB)
+
+
+# Strip type names - these don't require loading the actual libraries
+STRIP_TYPE_NAMES = [
+    "WS2811_STRIP_GRB",
+    "WS2812_STRIP",
+    "WS2811_STRIP_RGB",
+    "WS2811_STRIP_RBG",
+    "WS2811_STRIP_GBR",
+    "WS2811_STRIP_BGR",
+    "WS2811_STRIP_BRG",
+    "SK6812_STRIP",
+    "SK6812W_STRIP",
+    "SK6812_STRIP_RGBW",
+    "SK6812_STRIP_RBGW",
+    "SK6812_STRIP_GRBW",
+    "SK6812_STRIP_GBRW",
+    "SK6812_STRIP_BRGW",
+    "SK6812_STRIP_BGRW",
+]
 
 # For backwards compatibility - these values mirror rpi_ws281x constants
 # They're just used as keys to look up the actual color order
-STRIP_TYPES = {name: name for name in COLOR_ORDERS.keys()}
+STRIP_TYPES = {name: name for name in STRIP_TYPE_NAMES}
 
 
 class PixelStrip:
@@ -71,30 +106,25 @@ class PixelStrip:
         self._num = num
         self._brightness = brightness
         self._brightness_float = brightness / 255.0
+        self._strip_type = strip_type
+        self._strip = None
+        self._pixel_order = None
+        self._is_rgbw = False
+
+    def begin(self):
+        """Initialize the strip hardware."""
+        # Lazy load Adafruit libraries
+        _load_adafruit_libs()
 
         # Determine color order from strip type
-        if strip_type and strip_type in COLOR_ORDERS:
-            pixel_order = COLOR_ORDERS[strip_type]
-        elif strip_type and isinstance(strip_type, str) and strip_type in COLOR_ORDERS:
-            pixel_order = COLOR_ORDERS[strip_type]
-        else:
-            pixel_order = neopixel.GRB  # Default
+        self._pixel_order = _get_color_order(self._strip_type)
 
         # Determine if RGBW strip
-        self._is_rgbw = pixel_order in (
+        self._is_rgbw = self._pixel_order in (
             neopixel.RGBW, neopixel.RBGW, neopixel.GRBW,
             neopixel.GBRW, neopixel.BRGW, neopixel.BGRW
         )
 
-        # Store for later initialization
-        self._pixel_order = pixel_order
-        self._strip = None
-
-        # Internal pixel buffer (stores raw RGB/RGBW values before brightness)
-        self._pixels = [(0, 0, 0, 0) if self._is_rgbw else (0, 0, 0)] * num
-
-    def begin(self):
-        """Initialize the strip hardware."""
         self._strip = neopixel.NeoPixel_SPI(
             board.SPI(),
             self._num,
