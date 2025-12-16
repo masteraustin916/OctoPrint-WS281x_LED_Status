@@ -27,24 +27,40 @@ def _load_adafruit_libs():
 def _get_color_order(strip_type):
     """Get the color order for a strip type, loading libraries if needed."""
     _load_adafruit_libs()
+
+    # Define color orders as tuples (R index, G index, B index, [W index])
+    # neopixel_spi may not have all variants, so we define them here
+    RGB = (0, 1, 2)
+    GRB = (1, 0, 2)
+    RBG = (0, 2, 1)
+    GBR = (1, 2, 0)
+    BGR = (2, 1, 0)
+    BRG = (2, 0, 1)
+    RGBW = (0, 1, 2, 3)
+    GRBW = (1, 0, 2, 3)
+    RBGW = (0, 2, 1, 3)
+    GBRW = (1, 2, 0, 3)
+    BGRW = (2, 1, 0, 3)
+    BRGW = (2, 0, 1, 3)
+
     color_orders = {
-        "WS2811_STRIP_GRB": neopixel.GRB,
-        "WS2812_STRIP": neopixel.GRB,  # WS2812 is typically GRB
-        "WS2811_STRIP_RGB": neopixel.RGB,
-        "WS2811_STRIP_RBG": neopixel.RBG,
-        "WS2811_STRIP_GBR": neopixel.GBR,
-        "WS2811_STRIP_BGR": neopixel.BGR,
-        "WS2811_STRIP_BRG": neopixel.BRG,
-        "SK6812_STRIP": neopixel.GRB,
-        "SK6812W_STRIP": neopixel.GRBW,
-        "SK6812_STRIP_RGBW": neopixel.RGBW,
-        "SK6812_STRIP_RBGW": neopixel.RBGW,
-        "SK6812_STRIP_GRBW": neopixel.GRBW,
-        "SK6812_STRIP_GBRW": neopixel.GBRW,
-        "SK6812_STRIP_BRGW": neopixel.BRGW,
-        "SK6812_STRIP_BGRW": neopixel.BGRW,
+        "WS2811_STRIP_GRB": GRB,
+        "WS2812_STRIP": GRB,  # WS2812 is typically GRB
+        "WS2811_STRIP_RGB": RGB,
+        "WS2811_STRIP_RBG": RBG,
+        "WS2811_STRIP_GBR": GBR,
+        "WS2811_STRIP_BGR": BGR,
+        "WS2811_STRIP_BRG": BRG,
+        "SK6812_STRIP": GRB,
+        "SK6812W_STRIP": GRBW,
+        "SK6812_STRIP_RGBW": RGBW,
+        "SK6812_STRIP_RBGW": RBGW,
+        "SK6812_STRIP_GRBW": GRBW,
+        "SK6812_STRIP_GBRW": GBRW,
+        "SK6812_STRIP_BRGW": BRGW,
+        "SK6812_STRIP_BGRW": BGRW,
     }
-    return color_orders.get(strip_type, neopixel.GRB)
+    return color_orders.get(strip_type, GRB)
 
 
 # Strip type names - these don't require loading the actual libraries
@@ -119,11 +135,8 @@ class PixelStrip:
         # Determine color order from strip type
         self._pixel_order = _get_color_order(self._strip_type)
 
-        # Determine if RGBW strip
-        self._is_rgbw = self._pixel_order in (
-            neopixel.RGBW, neopixel.RBGW, neopixel.GRBW,
-            neopixel.GBRW, neopixel.BRGW, neopixel.BGRW
-        )
+        # Determine if RGBW strip (color order tuple has 4 elements)
+        self._is_rgbw = len(self._pixel_order) == 4
 
         self._strip = neopixel.NeoPixel_SPI(
             board.SPI(),
