@@ -304,15 +304,15 @@ $(function () {
             adduser: "User is in gpio group",
             spi_enabled: "SPI Enabled",
             spi_buffer_increase: "SPI buffer size increased",
-            set_core_freq: "core_freq correct in /boot/config.txt",
-            set_core_freq_min: "core_freq_min correct in /boot/config.txt",
+            set_core_freq: "core_freq correct in config.txt",
+            set_core_freq_min: "core_freq_min correct in config.txt",
         };
         self.reason_id_map = {
             failed: "This test did not pass",
             error: "Error: There was an unknown error running this test, please check the log",
             missing: "Error: The file this check expected does not exist",
             pi4_250:
-                "It looks like core_freq_min=250 is set in your /boot/config.txt file." +
+                "It looks like core_freq_min=250 is set in your config.txt file." +
                 " This needs to be removed manually for LEDs to work on a Pi 4.",
             not_required: "This is not required on your Raspberry Pi",
             "": "Test Passed",

@@ -24,13 +24,17 @@ The setup wizard requires root access, and therefore the password for the Pi use
 
     * Runs `sudo adduser pi gpio`
 * **Enable SPI.** The plugin uses SPI to drive the LEDs, which is disabled by default and needs to be turned on.
-  * Adds `dtparam=spi=on` to `/boot/config.txt`
+  * Adds `dtparam=spi=on` to `config.txt`
 * **Increase SPI buffer size.** Whilst the plugin will work without this, it will only work well with a handful of LEDs, so the buffer size must be increased to control more LEDs.
-  * Adds `spidev.bufsiz=32768` to the end of `/boot/cmdline.txt`
+  * Adds `spidev.bufsiz=32768` to the end of `cmdline.txt`
 * **Set compatible clock frequency** _Raspberry Pi 3 or earlier only, not required for a Pi 4_ The Pi 3's default internal clock frequency is not compatible with SPI, so it needs to be set to 250 to be compatible.
-  * Adds `core_freq=250` to `/boot/config.txt`
+  * Adds `core_freq=250` to `config.txt`
 * **Set a minimum clock frequency** _Raspberry Pi 4 only_ On a Raspberry Pi 4, the clock frequency is dynamic and can change when the pi is 'idle' vs. 'working', which causes LEDs to flicker, change colour, or stop working completely. By setting a minimum the same as the max, we stop this dynamic clocking.
-  * Adds `core_freq_min=500` to `/boot/config.txt`
+  * Adds `core_freq_min=500` to `config.txt`
+
+{% hint style="info" %}
+**Note:** On Raspberry Pi OS Bookworm and later, the boot configuration files are located at `/boot/firmware/config.txt` and `/boot/firmware/cmdline.txt`. On older versions, they are at `/boot/config.txt` and `/boot/cmdline.txt`. The plugin automatically detects the correct location.
+{% endhint %}
 
 {% hint style="success" %}
 **WS281x LED Status OS configuration complete!**\

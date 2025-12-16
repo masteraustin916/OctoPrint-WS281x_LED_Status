@@ -15,6 +15,16 @@ from octoprint_ws281x_led_status import api
 from octoprint_ws281x_led_status.util import run_system_command
 
 
+def get_boot_path():
+    """
+    Detect the correct boot configuration path.
+    Raspberry Pi OS Bookworm (and later) moved boot files to /boot/firmware/
+    """
+    if os.path.exists("/boot/firmware/config.txt"):
+        return "/boot/firmware"
+    return "/boot"
+
+
 class PluginWizard:
     def __init__(self, pi_model):
         self._logger = logging.getLogger("octoprint.plugins.ws281x_led_status.wizard")
@@ -79,7 +89,8 @@ class PluginWizard:
     @staticmethod
     def is_spi_enabled():
         result = {"check": api.WIZ_ENABLE_SPI, "passed": False, "reason": "failed"}
-        with io.open("/boot/config.txt") as file:
+        boot_path = get_boot_path()
+        with io.open("{}/config.txt".format(boot_path)) as file:
             for line in file:
                 if line.startswith("dtparam=spi=on"):
                     result = {"check": api.WIZ_ENABLE_SPI, "passed": True, "reason": ""}
@@ -88,8 +99,9 @@ class PluginWizard:
     @staticmethod
     def is_spi_buffer_increased():
         result = {"check": api.WIZ_INCREASE_BUFFER, "passed": False, "reason": "failed"}
-        # Check `/boot/cmdline.txt` first
-        with io.open("/boot/cmdline.txt") as file:
+        boot_path = get_boot_path()
+        # Check `cmdline.txt` first
+        with io.open("{}/cmdline.txt".format(boot_path)) as file:
             for line in file:
                 if "spidev.bufsiz=32768" in line:
                     return {
@@ -122,8 +134,8 @@ class PluginWizard:
             "passed": True if self.pi_model == "4" else False,
             "reason": "not_required" if self.pi_model == "4" else "failed",
         }
-
-        with io.open("/boot/config.txt") as file:
+        boot_path = get_boot_path()
+        with io.open("{}/config.txt".format(boot_path)) as file:
             for line in file:
                 if line.startswith("core_freq=250"):
                     if self.pi_model == "4":
@@ -145,7 +157,8 @@ class PluginWizard:
 
         if self.pi_model == "4":
             # Pi 4 has a variable clock speed, which messes up SPI timing
-            with io.open("/boot/config.txt") as file:
+            boot_path = get_boot_path()
+            with io.open("{}/config.txt".format(boot_path)) as file:
                 for line in file:
                     if line.startswith("core_freq_min=500"):
                         result = {
@@ -162,6 +175,7 @@ class PluginWizard:
         return result
 
     def run_wizard_command(self, cmd, data):
+        boot_path = get_boot_path()
         command_to_system = {
             # -S for sudo commands means accept password from stdin, see https://www.sudo.ws/man/1.8.13/sudo.man.html#S
             api.WIZ_ADDUSER: ["sudo", "-S", "adduser", getpass.getuser(), "gpio"],
@@ -170,14 +184,14 @@ class PluginWizard:
                 "-S",
                 "bash",
                 "-c",
-                "echo 'dtparam=spi=on' >> /boot/config.txt",
+                "echo 'dtparam=spi=on' >> {}/config.txt".format(boot_path),
             ],
             api.WIZ_SET_CORE_FREQ: [
                 "sudo",
                 "-S",
                 "bash",
                 "-c",
-                "echo 'core_freq=250' >> /boot/config.txt"
+                "echo 'core_freq=250' >> {}/config.txt".format(boot_path)
                 if self.pi_model != "4"
                 else "",
             ],
@@ -186,7 +200,7 @@ class PluginWizard:
                 "-S",
                 "bash",
                 "-c",
-                "echo 'core_freq_min=500' >> /boot/config.txt"
+                "echo 'core_freq_min=500' >> {}/config.txt".format(boot_path)
                 if self.pi_model == "4"
                 else "",
             ],
@@ -196,7 +210,7 @@ class PluginWizard:
                 "sed",
                 "-i",
                 "$ s/$/ spidev.bufsiz=32768/",
-                "/boot/cmdline.txt",
+                "{}/cmdline.txt".format(boot_path),
             ],
         }
         sys_command = command_to_system[cmd]

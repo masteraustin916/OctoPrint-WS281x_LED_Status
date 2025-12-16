@@ -32,7 +32,7 @@ To run this without root access, you must use an SPI pin. WS281x LEDs require sp
 
 On all Pi's, the default, **GPIO 10** can be used.
 
-On all Pi's **except** the original Pi 1 model A and Pi 1 model B, **GPIO 20** can be used. This requires adding `dtoverlay=spi1-3cs` to the `/boot/config.txt` file to enable SPI1
+On all Pi's **except** the original Pi 1 model A and Pi 1 model B, **GPIO 20** can be used. This requires adding `dtoverlay=spi1-3cs` to the `config.txt` file to enable SPI1 (located at `/boot/firmware/config.txt` on Raspberry Pi OS Bookworm+, or `/boot/config.txt` on older versions)
 
 Other SPI interfaces are available, specific to certain Raspberry Pi models. More details on them can be found on the[ Raspberry Pi Documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#serial-peripheral-interface-spi) which contains detailed information. It is unknown if they all work with WS281x LEDs.
 
