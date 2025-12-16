@@ -21,9 +21,9 @@ except ImportError:
 
 # noinspection PyPackageRequirements
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
-from rpi_ws281x import PixelStrip
 
 from octoprint_ws281x_led_status import constants
+from octoprint_ws281x_led_status.strip_compat import PixelStrip
 from octoprint_ws281x_led_status.effects import error_handled_effect
 from octoprint_ws281x_led_status.runner import segments
 from octoprint_ws281x_led_status.runner import timer as active_times
@@ -92,8 +92,7 @@ class EffectRunner:
 
             if int(self.strip_settings["count"]) < 6:
                 self._logger.info("Applying < 6 LED flickering bug workaround")
-                # rpi_ws281x will think we want 6 LEDs, but we will only use those configured
-                # this works around issues where LEDs would show the wrong colour, flicker and more
+                # Workaround for issues where LEDs would show the wrong colour, flicker and more
                 # when used with less than 6 LEDs.
                 # See #132 for details
                 self.strip_settings["count"] = 6
@@ -438,7 +437,7 @@ class EffectRunner:
     def start_strip(self):
         """
         Start PixelStrip and SegmentManager object
-        :returns strip: (rpi_ws281x.PixelStrip) The initialised strip object
+        :returns strip: (PixelStrip) The initialised strip object
         """
         try:
             strip = PixelStrip(
