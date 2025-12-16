@@ -38,7 +38,7 @@ plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
 # Using Adafruit NeoPixel SPI for Pi 5 compatibility instead of rpi_ws281x
-plugin_requires = ["adafruit-circuitpython-neopixel-spi"]
+plugin_requires = ["adafruit-circuitpython-neopixel-spi", "lgpio"]
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
