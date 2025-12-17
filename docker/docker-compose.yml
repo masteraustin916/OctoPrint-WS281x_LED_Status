@@ -1,0 +1,56 @@
+version: '2.4'
+
+services:
+
+  octoprint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - 80:80
+    devices:
+      - /dev/vchiq:/dev/vchiq
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/spidev0.0:/dev/spidev0.0
+    group_add:
+      - video
+    volumes:
+      - octoprint:/octoprint
+
+  mjpg-streamer:
+    restart: unless-stopped
+    image: openhorizon/mjpg-streamer-pi3
+    command: ./mjpg_streamer -o "output_http.so -w ./www" -i "input_uvc.so -r 1280x720 -d /dev/video0 -f 30"
+    devices:
+      - /dev/video0:/dev/video0
+    ports:
+      - 8080:8080
+
+    # uncomment the lines below to ensure camera streaming is enabled when
+    # you add a video device
+    #environment:
+    #  - ENABLE_MJPG_STREAMER=true
+
+  ####
+  # uncomment if you wish to edit the configuration files of octoprint
+  # refer to docs on configuration editing for more information
+  ####
+
+  #config-editor:
+  #  image: linuxserver/code-server
+  #  ports:
+  #    - 8443:8443
+  #  depends_on:
+  #    - octoprint
+  #  restart: unless-stopped
+  #  environment:
+  #    - PUID=0
+  #    - PGID=0
+  #    - TZ=America/Chicago
+  #  volumes:
+  #    - octoprint:/octoprint
+
+volumes:
+  octoprint:
